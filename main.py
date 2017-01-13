@@ -1,60 +1,95 @@
 #!/usr/bin/env python
-from __future__ import print_function
-import urllib2
-import os
-from bs4 import BeautifulSoup, Comment
-from img2ascii import *
 
+from api import *
+from parser import *
+import getpass
+
+#initial page number of feed
 page_number = 1
+
+#check if user wants to quit
 want_to_quit = False
-def get_terminal_width():
-	columns = os.popen('stty size', 'r').read().split()[1]
-	return int(columns)
 
-def parse_content(url_type="feed", url_arg="", page_number=1):
-	if url_type == "feed":
-		response = urllib2.urlopen("http://devrant.io/feed/algo/" + str(page_number))
-	if url_type == "search":
-		response = urllib2.urlopen("https://www.devrant.io/search?term=" + url_arg)
-	raw_html = response.read()
-	soup = BeautifulSoup(raw_html)
-	result_set = soup.find_all("li", class_="rant-comment-row-widget")
-	for result in result_set:
-		post_text = result.find("div", class_="rantlist-title-text")
-		vote_count = result.find("div", class_="votecount")
-		post_id_link = result.find("a", class_="rantlist-bglink")
-		post_id_stripped = post_id_link.get("href")[-6:]
-		timestamp = result.find(text=lambda text:isinstance(text, Comment))
-		tags = result.find("div", class_="rantlist-tags")
-		print("Vote Count: " + vote_count.get_text())
-		print("Posted " + BeautifulSoup(timestamp.extract()).get_text() + " ago")
-		print("ID: " + post_id_stripped)
-		print(post_text.get_text())
-		if len(tags.get_text()) > 1:
-			print("Tags: " + tags.get_text().strip().replace("\n", ", "))
-		if result.img != None:
-			#print(result.img['src'])
-			print_ascii_from_url(result.img['src'])
-		for i in range(0, get_terminal_width()):
-			print("=",end='')
-		print("")
+#initial login state
+user_logged_in = False
 
-parse_content()
+#check if user in rant details
+in_rant_page = False
+
+#check if user wants to login
+want_to_login = raw_input("Do you want to login? You need to be logged on to post and vote.(y/n): ")
+if want_to_login.startswith("y"):
+	username = raw_input("Username / E-mail: ")
+	password = getpass.getpass("Password: ")
+	while user_logged_in is False:
+		authorization = login(username, password)
+		if authorization is not False:
+			print("Successfully logged in!")
+			user_logged_in = True
+		else:
+			print("Something went wrong, probably wrong username/password combination.")
+else:
+	print "It's OK, you can still enjoy devRant!"
+
+#parsing 1st page of feed
+parse_feed()
 
 while want_to_quit is False:
-	navigation_key = raw_input("V for next page, Y for previous page, Q to exit\n")
+	if user_logged_in:
+		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant, U <rant ID> to upvote, D <rant ID> to downvote\n"
+	if user_logged_in is False:
+		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant\n" 
+	if in_rant_page is True and user_logged_in is False:
+		nav_prompt = "Q to exit, S <term> to search, R <rant ID> to browse a rant, B to back\n"
+	if in_rant_page is True and user_logged_in is True:
+		nav_prompt = "Q to exit, S <term> to search, U <rant ID> to upvote, D <rant ID> to downvote, A <comment> to add comment, B to back\n"
+	nav_option = raw_input(nav_prompt)
 
-	if navigation_key == "v" or navigation_key == "V":
+	if nav_option == "v" or nav_option == "V":
 		page_number += 1
-		parse_content("feed", "a", page_number)
-	if navigation_key == "y" or navigation_key == "Y":
+		parse_feed("feed", "a", page_number)
+
+	if nav_option == "y" or nav_option == "Y":
 		page_number -= 1
 		if page_number == 0:
 			page_number = 1
-		parse_content("feed", "a", page_number)
-	if navigation_key == "q" or navigation_key == "Q":
+		parse_feed("feed", "a", page_number)
+
+	if nav_option == "q" or nav_option == "Q":
 		want_to_quit = True
-	#else:
-		#parse_content("search", navigation_key)
+
+	if nav_option =="b" or nav_option == "B":
+		parse_feed("feed", "a", page_number)
+		in_rant_page = False
+
+	if nav_option.startswith("s") or nav_option.startswith("S"):
+		search_term = nav_option.split()[1]
+		parse_feed("search", nav_option)
+
+
+	if nav_option.startswith("r") or nav_option.startswith("R"):
+		rant_id = nav_option.split()[1]
+		parse_rant(rant_id)
+		in_rant_page = True
+
+	if nav_option.startswith("u") or nav_option.startswith("U"):
+		post_id = nav_option.split()[1]
+		if in_rant_page:
+			vote_post(post_id, authorization['token_key'], authorization['token_id'], authorization['user_id'], "1")
+		else:
+			vote_rant(post_id, authorization['token_key'], authorization['token_id'], authorization['user_id'], "1")
+
+	if nav_option.startswith("d") or nav_option.startswith("D"):
+		post_id = nav_option.split()[1]
+		if in_rant_page:
+			vote_post(post_id, authorization['token_key'], authorization['token_id'], authorization['user_id'], "1")
+		else:
+			vote_rant(post_id, authorization['token_key'], authorization['token_id'], authorization['user_id'], "1")
+
+	if nav_option.startswith("a") or nav_option.startswith("A"):
+		comment = nav_option[2:]
+		post_comment(rant_id, authorization['token_key'], authorization['token_id'], authorization['user_id'], comment)
+
+
 
 print("Farewell!")
