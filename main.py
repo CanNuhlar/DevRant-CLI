@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 from api import *
 from parser import *
 import getpass
@@ -26,23 +26,31 @@ if want_to_login.startswith("y"):
 		if authorization is not False:
 			print("Successfully logged in!")
 			user_logged_in = True
+			for i in range(0, get_terminal_width()):
+				print("=",end='')
+			print("")
 		else:
 			print("Something went wrong, probably wrong username/password combination.")
 else:
-	print "It's OK, you can still enjoy devRant!"
+	print("It's OK, you can still enjoy devRant!")
+	for i in range(0, get_terminal_width()):
+			print("=",end='')
+	print("")
 
 #parsing 1st page of feed
 parse_feed()
 
 while want_to_quit is False:
 	if user_logged_in:
-		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant, U <rant ID> to upvote, D <rant ID> to downvote\n"
+		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant, A <rant> to post rant, U <rant ID> to upvote, D <rant ID> to downvote\n"
 	if user_logged_in is False:
 		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant\n" 
 	if in_rant_page is True and user_logged_in is False:
 		nav_prompt = "Q to exit, S <term> to search, R <rant ID> to browse a rant, B to back\n"
 	if in_rant_page is True and user_logged_in is True:
 		nav_prompt = "Q to exit, S <term> to search, U <rant ID> to upvote, D <rant ID> to downvote, A <comment> to add comment, B to back\n"
+	
+	#prompt the user accordingly to situation
 	nav_option = raw_input(nav_prompt)
 
 	if nav_option == "v" or nav_option == "V":

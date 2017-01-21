@@ -1,0 +1,2 @@
+*.pyc
+*.jpg #ignore the jpeg files that used primarili for ascii art conversion testing

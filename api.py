@@ -68,6 +68,13 @@ def vote_post(post_id, token_key, token_id, user_id, vote):
 	else:
 		return False
 
+
+def parse_notifications(): #TODO parse notifications from the API (I may pass this, doesn't quite fit for a CLI anyway)
+	pass
+
+def add_rant(multipartform): #TODO find a way to send multipart post using urllib 
+	pass
+
 #authorization = login("username", "password")
 
 #post_comment("380308", authorization['token_key'], authorization['token_id'], authorization['user_id'], "Don't mind me, testing the devRant API")
