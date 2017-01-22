@@ -16,6 +16,9 @@ user_logged_in = False
 #check if user in rant details
 in_rant_page = False
 
+#check if user in notifications page
+in_notifications_page = False
+
 #check if user wants to login
 want_to_login = raw_input("Do you want to login? You need to be logged on to post and vote.(y/n): ")
 if want_to_login.startswith("y"):
@@ -42,14 +45,15 @@ parse_feed()
 
 while want_to_quit is False:
 	if user_logged_in:
-		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant, A <rant> to post rant, U <rant ID> to upvote, D <rant ID> to downvote\n"
+		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant, P <rant> to post rant, U <rant ID> to upvote, D <rant ID> to downvote, N to see your notifications\n"
 	if user_logged_in is False:
 		nav_prompt = "V for next page, Y for previous page, Q to exit, S <term> to search, R <rant ID> to browse a rant\n" 
 	if in_rant_page is True and user_logged_in is False:
 		nav_prompt = "Q to exit, S <term> to search, R <rant ID> to browse a rant, B to back\n"
 	if in_rant_page is True and user_logged_in is True:
-		nav_prompt = "Q to exit, S <term> to search, U <rant ID> to upvote, D <rant ID> to downvote, A <comment> to add comment, B to back\n"
-	
+		nav_prompt = "Q to exit, S <term> to search, U <rant ID> to upvote, D <rant ID> to downvote, A <comment> to add comment, B to back, N to see your notifications\n"
+	if in_notifications_page:
+		nav_prompt = "B to back"
 	#prompt the user accordingly to situation
 	nav_option = raw_input(nav_prompt)
 
@@ -93,6 +97,10 @@ while want_to_quit is False:
 			vote_post(post_id, authorization['token_key'], authorization['token_id'], authorization['user_id'], "1")
 		else:
 			vote_rant(post_id, authorization['token_key'], authorization['token_id'], authorization['user_id'], "1")
+
+	if nav_option.startswith("n") or nav_option.startswith("N"):
+		in_notifications_page = True
+		parse_notifications(authorization['token_key'], authorization['token_id'], authorization['user_id'])
 
 	if nav_option.startswith("a") or nav_option.startswith("A"):
 		comment = nav_option[2:]
